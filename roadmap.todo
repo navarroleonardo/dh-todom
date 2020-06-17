@@ -1,0 +1,6 @@
+✔ Por arquivos de front-end na public @done
+✔ Fazer com que a rota '/' envie o index.html @done
+☐ Criar rota > controller para login
+☐ Criar middleware para verificar existência de token no header
+☐ Criar Rota que carrega as tarefas do usuário
+☐ Proteger rota com o middleware
