@@ -1,171 +1,207 @@
-const tarefas = [
-    {
-        id: 10,
-        prioridade: 1,
-        texto: "Ir ao mercado",
-        feita: true
-    },
-    {
-        id: 20,
-        prioridade: 1,
-        texto: "Beber energético",
-        feita: false
-    },
-    {
-        id: 22,
-        prioridade: 2,
-        texto: "Cortar o cabelo",
-        feita: true
-    },
-    {
-        id: 25,
-        prioridade: 3,
-        texto: "Gravar vídeo",
-        feita: false
-    },
-];
+let tarefas = getLocalStorage();
 
-function mostrarTabela(tarefa) {
-    // capturando a table
-    const table = document.getElementById('table');
+function getLocalStorage() {
+    console.log(localStorage.getItem("@todom:tasks"))
+    return JSON.parse(localStorage.getItem("@todom:tasks")) || [];
+}
 
-    // criar uma nova linha e adicioná-la a tabela
-    const novaLinha = document.createElement('tr');
+// Array de prioridades
+// const prioridades = ['baixa','média','alta'];
+const prioridades = { 1: 'baixa', 2: 'média', 3: 'alta' }
+const render = (tarefas) => {
 
-    // dar a essa linha a classe adequada
-    novaLinha.className = tarefa.feita ? 'done' : '';
+    // Capturar o elemento que contém a lista de tarefas
+    let table = document.getElementById("table");
 
-    // criar um input checkbox
-    const checkbox = document.createElement('input');
-    checkbox.setAttribute('type', 'checkbox');
+    // Alternativa para o document.getElementById("table");
+    // table = document.querySelector("#table");
 
-    // marcar o input checkbox caso necessario
-    checkbox.checked = tarefa.feita;
-    checkbox.addEventListener('click', (evt) => {
+    // Limpar a lista
+    table.innerText = "";
 
-        // altera o status da tarefa no array
-        tarefa.feita = !tarefa.feita;
-        console.log(tarefa);
+    // Criando a lista de tarefas
+    for (const tarefa of tarefas) {
 
-        // capturando a linha referente a tarefa a ser removida
-        let tr = evt.target.parentNode.parentNode;
-
-        // alterando classe da linha no DOM
-        tr.classList.toggle('done');
-    })
-
-    // criar uma celula
-    const tdCheckbox = document.createElement('td');
-
-    // adicionar o input a celula criada
-    tdCheckbox.appendChild(checkbox);
-
-    // criar a celula de texto e adicionar a ela o texto
-    const tdTexto = document.createElement('td');
-    let strPrioridade = ['baixa', 'media', 'alta'][tarefa.prioridade - 1];
-    tdTexto.innerText = '[' + strPrioridade + '] ' + tarefa.texto;
-
-    // criar um elemento 'i' da classe material-icons contendo o texto delete
-    const icon = document.createElement('i');
-    icon.classList.add('material-icons');
-    icon.innerText = 'delete';
-    icon.addEventListener('click', (evt) => {
-
-        if (!confirm("Tem certeza que deseja remover a tarefa?")) {
-            return;
+        // Criando uma linha de tabela
+        let row = document.createElement('tr');
+        if (tarefa.feito) {
+            row.className = "done";
+            // row.classList.add("done");
         }
 
-        // remove do array de tarefas
-        removerTarefa(tarefa.id);
+        // Criar o input checkbox
+        let checkbox = document.createElement('input');
+        checkbox.setAttribute("type", "checkbox");
+        checkbox.checked = tarefa.feito;
+        checkbox.id = "chk_" + tarefa.id;
+        checkbox.addEventListener('click', onCheckClick);
 
-        // capturando a linha referente a tarefa a ser removida
-        let tr = evt.target.parentNode.parentNode;
+        // Criar a célula que vai conter o checkbox
+        let tdCheck = document.createElement('td');
+        tdCheck.appendChild(checkbox);
 
-        // removendo da DOM
-        tr.remove();
+        // Adicionar esse tdCheck à row
+        row.appendChild(tdCheck);
 
-        // mostrar mensagem de sucesso
-        let sucessoDelete = document.querySelector('.sucesso-delete');
-        sucessoDelete.style.opacity = 1;
+        // Criar a td de texto
+        let tdTexto = document.createElement('td');
+        tdTexto.innerText = tarefa.texto;
+        row.appendChild(tdTexto);
 
-        setTimeout(() => {
-            sucessoDelete.style.opacity = 0;
-        }, 3000)
-    });
+        // Criar a td da prioridade
+        let tdPrioridade = document.createElement('td');
+        tdPrioridade.innerText = prioridades[tarefa.prioridade];
+        row.appendChild(tdPrioridade);
 
-    // criar uma celula
-    const tdIcon = document.createElement('td');
+        // Criar td de ações
+        let tdAcoes = document.createElement('td');
+        let i = document.createElement('i');
+        i.className = "material-icons";
+        i.innerText = "delete";
+        i.addEventListener('click', onDeleteClick);
+        i.setAttribute("id", tarefa.id);
+        tdAcoes.appendChild(i);
+        row.appendChild(tdAcoes);
 
-    // adicionar à celula criada o elemento i
-    tdIcon.appendChild(icon);
+        // Adicionar a linha a tabela
+        table.appendChild(row);
 
-    // adicionar as três celulas criadas a linha criada
-    novaLinha.appendChild(tdCheckbox);
-    novaLinha.appendChild(tdTexto);
-    novaLinha.appendChild(tdIcon);
-
-    // adicionar a linha a tabela
-    table.appendChild(novaLinha);
-
-}
-
-function mostrarTarefas(tarefas) {
-
-    const table = document.getElementById('table');
-    table.innerText = '';
-
-    for (const tarefa of tarefas) {
-        mostrarTabela(tarefa);
     }
+
 }
 
-function removerTarefa(id) {
-    let pos = tarefas.findIndex(tarefa => tarefa.id == id);
-    tarefas.splice(pos, 1);
+const onDeleteClick = (evt) => {
+
+    // Capturando id da tarefa a ser removida;
+    let id = Number(evt.target.id);
+
+    // Confirmar a exclusão
+    if (!window.confirm("Tem certeza que deseja excluir a tarefa?")) {
+
+        // Usuário clicou em não. Abortando.
+        return;
+
+    }
+
+    // Remover a tarefa do array
+    destroy(id);
+
+    // Renderizar a lista novamente
+    render(tarefas);
+
 }
 
-const form = document.getElementById('form');
+const onCheckClick = evt => {
 
-form.addEventListener('submit', (evt) => {
-    // removendo comportamento padrão do botão
+    // capturando o id da tarefa clicada
+    let id = Number(evt.target.id.replace('chk_', ''));
+
+    // Levantar tarefa do id capturado
+    let tarefa = tarefas.find(t => t.id == id);
+
+    // alterar o campo feito
+    tarefa.feito = !tarefa.feito;
+
+    // Alterando a classe da tr que contem o td que contem o checkbox;
+    evt.target.parentNode.parentNode.classList.toggle('done');
+
+}
+
+/**
+ * Criar função create(texto,prioridade) que recebe um texto e prioridade como parâmetros
+ * Essa função deve retornar um objeto literal com os seguintes campos
+ * texto: com o texto passado por parâmetro
+ * prioridade: com base na prioridade passada como parâmetro
+ * feito: false
+ */
+const create = (texto, prioridade) => {
+
+    // Determinando o id do novo elemento
+    let id = (tarefas.length == 0 ? 1 : tarefas[tarefas.length - 1].id + 1);
+
+    // retornando a nova tarefa
+    return {
+        id,
+        texto,
+        prioridade,
+        feito: false
+    }
+
+    // Alteração para provocar conflito!!
+
+}
+
+/**
+ * Criar uma função destroy que recebne o id de uma tarefa como parâmetro
+ * e remove essa tarefa do array  * 
+ */
+const destroy = (id) => {
+    tarefas = tarefas.filter(t => t.id != id);
+}
+
+// Capturar elementos importantes da página
+let form = document.getElementById('form'); // Capturar o form
+
+// FORMA 1 = = = = = = = = = = = =
+// form.onsubmit = (evt) => {
+//     console.log("teste");
+// }
+
+// FORMA 2 = = = = = = = = = = = =
+
+// Crio a função:
+const onFormSubmit = (evt) => {
+
+    // Evitar o comportamento padrão de um form
     evt.preventDefault();
 
-    // armazenando texto do input
-    const input = document.getElementById('tf_2do');
-    let novaTarefa = input.value;
+    // Capturar o texto digitado pelo utextosuário
+    let texto = document.getElementById("tf_2do").value;
 
-    let regex = /#[1-3]\ /;
-
-    // declarando prioridade e texto
-    if (regex.test(novaTarefa)) {
-        var prioridade = Number(novaTarefa[1]);
-        var texto = novaTarefa.substr(3);
-    } else {
-        var prioridade = 1;
-        var texto = novaTarefa;
+    // Testando se o texto é vazio 
+    if (texto.trim() == '') {
+        return;
     }
 
-    // declarando id
-    let id = tarefas[tarefas.length - 1]?.id + 1 || 1;
+    // Verificar se existe prioridade settada nesse texto
+    let strInicio = texto.substr(0, 3);
+    let prioridade;
+    switch (strInicio) {
+        case '#1 ':
+            prioridade = 1;
+            texto = texto.slice(3);
+            break;
 
-    // armazenando a nova tarefa no array
-    tarefas.push({
-        id,
-        prioridade,
-        texto,
-        feita: false
-    });
+        case '#2 ':
+            prioridade = 2;
+            texto = texto.slice(3);
+            break;
 
-    // adicionando tarefa ao DOM
-    mostrarTabela(tarefas[tarefas.length - 1]);
+        case '#3 ':
+            prioridade = 3;
+            texto = texto.slice(3);
+            break;
 
-    // mostrar mensagem de sucesso
-    let sucessoCreate = document.querySelector('.sucesso-create');
-    sucessoCreate.style.opacity = 1;
+        default:
+            prioridade = 1;
+            break;
+    }
 
-    setTimeout(() => {
-        sucessoCreate.style.opacity = 0;
-    }, 3000)
-});
+    // Criar o objeto de tarefa sabendo o texto e a prioridade
+    let tarefa = create(texto, prioridade);
 
-mostrarTarefas(tarefas);
+    // Adicionar o objeto tarefa ao array de tarefas
+    tarefas.push(tarefa);
+
+    // Renderizar a minha lista novamente
+    render(tarefas);
+
+    // Lipar o campo de texto
+    document.getElementById("tf_2do").value = "";
+
+}
+
+// Associo o evento à função
+form.addEventListener('submit', onFormSubmit);
+
+render(tarefas);
